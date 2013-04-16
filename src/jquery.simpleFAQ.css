@@ -1,0 +1,16 @@
+/* -------- simpleFAQ styles --------- */
+#faqList li { list-style: none; }
+#faqList .question {
+  padding-left: 18px;
+  background: transparent url('faq/plus.png') left center no-repeat; 
+}
+#faqList li.simpleFAQShowing .question {
+  background: transparent url('faq/minus.png') left center no-repeat;
+}
+#faqList .simpleFAQHover { color: #060; }
+#faqList .answer {
+  margin-left: 1em;
+  border: 1px solid #66c;
+  padding: 0.4em;
+}
+.tags { font-size: 0.7em; color: #999; }

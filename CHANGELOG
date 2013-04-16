@@ -1,0 +1,29 @@
+
+Version 0.7
+ - Minor bug fix (leftover console statement) and file size reduction
+
+Version 0.6
+ - Added direct FAQ jumping using URL anchors (thanks to Ian G. for the idea and starting code)
+
+Version 0.5
+ - Fixed bug where nodeTypes (usually "li") within a FAQ were selected as FAQs
+   (In other words, you had a FAQ that was an LI, and then an LI inside that.)
+ - Added audit for single root node in jQuery chain, otherwise we kind of break.
+
+Version 0.4
+ - Fixed issue with class on shown answers
+   NOTE: The answer div no longer has the simpleFAQShowing class added!
+         In your CSS you will need to use "li.simpleFAQShowing .answer".
+
+Version 0.3
+ - Added caseSensitive option for searches
+ - Added list of words to ignore when searching/scoring
+ - Added "searchStart" and "searchEnd" events
+ - Added more classes to FAQs found by searching
+
+Version 0.2
+ - Added speed option (thanks to Ferenc Radius)
+ - Minor other changes (size, comments/notes)
+
+Version 0.1
+ - Initial Release
