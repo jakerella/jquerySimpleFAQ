@@ -1,4 +1,21 @@
 
+Version 1.0.0
+ - Many changes which will BREAK existing usage. Look for (COMPATABILITY WARNING) messages below!
+ - Moved everything to github
+ - Changed minimum support to jQuery 1.7 (COMPATABILITY WARNING)
+ - Reorganized files
+ - Organized code into more OOP model (better for testing)
+ - Added test suite
+ - Added namespace to all events
+ - Added various events
+ - Changes to some class names (COMPATABILITY WARNING)
+ - Various efficiencies (and removed some unnecessary code)
+ - Removed forced ID on FAQ node (COMPATABILITY WARNING)
+ - Change to structure of HTML when FAQs generated from JSON data (COMPATABILITY WARNING)
+ - Removed ability to ignore words in scoring search results (COMPATABILITY WARNING)
+ - The searchEnd event now returns 2-dimensional array with search scores and nodes (COMPATABILITY WARNING)
+ - Added option to pass in a custom "score" function for FAQ text
+
 Version 0.7
  - Minor bug fix (leftover console statement) and file size reduction
 

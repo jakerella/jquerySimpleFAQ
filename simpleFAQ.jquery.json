@@ -1,12 +1,11 @@
 {
-  "name": "simpleCaptcha",
-  "title": "jQuery SimpleCaptcha",
-  "description": "Easy-to-use and understand captcha implementation.",
+  "name": "simpleFAQ",
+  "title": "jQuery SimpleFAQ",
+  "description": "jQuery plugin to create an easy-to-use FAQ user interface",
   "keywords": [
-    "form",
-    "captcha",
-    "spam",
-    "human"
+    "FAQ",
+    "questions",
+    "accordion"
   ],
   "version": "1.0.0",
   "author": {
@@ -21,11 +20,11 @@
     }
   ],
   "dependencies": {
-    "jquery": ">=1.7"
+    "jquery": ">=1.2"
   },
-  "homepage": "https://github.com/jakerella/jquerySimpleCaptcha",
-  "docs": "https://github.com/jakerella/jquerySimpleCaptcha",
-  "download": "https://github.com/jakerella/jquerySimpleCaptcha",
-  "bugs": "https://github.com/jakerella/jquerySimpleCaptcha/issues",
-  "demo": "http://jordankasper.com/jquery/captcha/examples.php"
+  "homepage": "https://github.com/jakerella/jquerySimpleFAQ",
+  "docs": "https://github.com/jakerella/jquerySimpleFAQ",
+  "download": "https://github.com/jakerella/jquerySimpleFAQ",
+  "bugs": "https://github.com/jakerella/jquerySimpleFAQ/issues",
+  "demo": "http://jordankasper.com/jquery/faq/examples.php"
 }

@@ -1,8 +1,8 @@
 /* Copyright (c) 2008 Jordan Kasper
  * Licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
  * Copyright notice and license must remain intact for legal use
- * Requires: jQuery 1.2+
- *           jQuery.quicksilver
+ * Requires: jQuery 1.7+
+ *           jQuery.quicksilver (or provide your own scoring function for searches)
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
@@ -17,269 +17,360 @@
  *  
  */
 ;(function($) {
-  
-  // ----------- Public methods ----------- //
-  
+
+  /**
+   * This method will add the FAQ UI to the selected element
+   * 
+   *  Typical usage:
+   *   $('ul#faqs').simpleFAQ({
+   *     // options
+   *   });
+   * 
+   * @param  {object|string} o Options for the new FAQ object
+   * @return {jQuery} The jQuery object for chain calling
+   */
   $.fn.simpleFAQ = function(o) {
-    var n = this;
-    if (n.length != 1) { return n; }
-    n.addClass('simpleFAQList');
-    
-    // Set up options (and defaults)
+    var n = $(this);
     o = (o)?o:{};
-    o = audit($.extend({}, $.fn.simpleFAQ.defaults, o));
-    
-    // Make sure node has an ID
-    if (n.attr('id').length < 1) {
-      n.attr('id', 'simpleFAQ_'+Math.floor(Math.random() * 1000));
+
+    if (!o.node && n.length) {
+      o.node = n;
     }
-    
-    var qc = o.questionClass;
-    var ac = o.answerClass;
-    var nt = o.nodeType;
-    
-    // Are we building the FAQs from data? (audited above)
-    if (o.data != null) {
-      var d = o.data;
-      n.html('');
-      for (var i=0, l=d.length; i<l; ++i) {
-        n.append(
-          "<"+nt+" class='simpleFAQ'>"+
-          " <p class='"+qc+"'>"+d[i].question+"</p>"+
-          " <div class='"+ac+"'>"+
-          d[i].answer+
-          "<p class='"+o.tagClass+"'>"+d[i].tags+"</p>"+
-          "</div>"+
-          "</"+nt+">"
-        );
-      }
-    }
-    
-    // Cache all FAQ nodes (only first children)
-    var faqs = $('#'+n.attr('id')+' > '+nt);
-    
-    // Show answers when question clicked
-    faqs
-      .find('.'+qc)
-        .css('cursor', 'pointer')
-        .hover(
-          function () { $(this).addClass('simpleFAQHover'); },
-          function() { $(this).removeClass('simpleFAQHover'); }
-        )
-        .bind('click.simpleFAQ', function(e) {
-          var f = $(this).parent();
-          if (o.showOnlyOne) {
-            // Hide all others
-            n.find(nt)
-              .not(f)
-                .find('.'+ac)
-                  .slideUp(o.speed, function() {
-                    $(this).parent()
-                      .removeClass('simpleFAQShowing');
-                  });
-          }
-          $(this)
-            .siblings('.'+ac)
-              .slideToggle(o.speed, function() {
-                if ($(this).is(':visible')) {
-                  f.addClass('simpleFAQShowing');
-                  var h = f.attr('id');
-                  if (h && h.length > 0) {
-                    document.location.hash = escape(h);
-                  }
-                  n.trigger('show.simpleFAQ', [f[0]]);
-                } else {
-                  f.removeClass('simpleFAQShowing');
-                }
-              });
-        });
-    
-    // Hide all answers by default
-    faqs.find('.'+ac).hide();
-    
-    // Searching is enabled
-    if (o.allowSearch) {
-      // Helper for hiding FAQs when not in search results
-      var hideFAQ = function(node) {
-        $(node)
-          .hide()
-          .removeClass('simpleFAQResult')
-          .find('.'+ac)
-            .hide()
-            .parent()
-              .removeClass('simpleFAQShowing');
-      }
-      
-      // create input node
-      var sn = $(o.searchNode);
-      if (sn.length > 0 && typeof $.score == 'function') {
-        // Hide all FAQs, they'll be shown when found in a search
-        hideFAQ(n.find(nt));
-        
-        var h;
-        sn
-          .append("<input type='text' id='simpleFAQSearch' />")
-          .find('#simpleFAQSearch')
-            .keyup(function(e) {
-              clearTimeout(h);
-              var sn = this;
-              if (sn.value.length < 1) {
-                hideFAQ(n.find(nt));
-                return;
-              }
-              
-              // add a slight delay to wait for more input
-              h = setTimeout(function() {
-                n.trigger('searchStart.simpleFAQ', []);
-                // Score the input
-                var sc = [];
-                faqs.each(function(i) {
-                  var f = $(this);
-                  var tg = f.find('.'+o.tagClass).text();
-                  tg = (o.caseSensitive)?tg:tg.toLowerCase();
-                  var t = f.text();
-                  t = (o.caseSensitive)?t:t.toLowerCase();
-                  var q = getQuery(sn.value, o);
-                  var s = 0;
-                  
-                  if (q.length > 0) {
-                    s = $.score(t, q);
-                    s += scoreTags(q, tg);
-                  }
-                  if (s > o.minSearchScore) {
-                    sc.push([s, f]);
-                  } else {
-                    hideFAQ($(this));
-                  }
-                });
-                
-                if (o.sortSearch) {
-                  // Sort results
-                  sc.sort(function(a, b){
-                    return b[0] - a[0];
-                  });
-                }
-                
-                // Show the relevant questions
-                var r = [];
-                $.each(sc, function() {
-                  n.append(this[1].show().addClass('simpleFAQResult'));
-                  r.push(this[1][0]);
-                });
-                
-                n.trigger('sort.simpleFAQ', [r]);
-                n.trigger('searchEnd.simpleFAQ', [r]);
-                
-              }, $.fn.simpleFAQ.keyTimeout);
-            });
-      }
-    }
-    
-    var scoreTags = function(t, tags) {
-      var s = 0;
-      if (tags.length < 1) { return s; }
-      var w = t.split(' ');
-      for (var i=0, l=w.length; i<l; ++i) {
-        if (w[i].length < 1) { continue; }
-        if (tags.indexOf(w[i]) > -1) {
-          s += $.fn.simpleFAQ.tagMatchScore;
-        }
-      }
-      return s;
-    }
-    
-    var getQuery = function(t, o) {
-      var q = '';
-      t = (o.caseSensitive)?t:t.toLowerCase();
-      var ig = o.ignore;
-      if (ig.length > 0) {
-        var w = t.split(' ');
-        for (var i=0; i<w.length; ++i) {
-          if (w[i].length > 0) {
-            if (typeof ig.indexOf == 'function') {
-              if (ig.indexOf(w[i]) < 0) {
-                q += w[i] + ' ';
-              }
-            } else {
-              var f = false;
-              for (var j=0; j<ig.length; ++j) {
-                if (ig[j] == w[i]) {
-                  f = true;
-                  break;
-                }
-              }
-              if (!f) { q += w[i] + ' '; }
-            }
-          }
-        }
-        if (q.length > 0) { q = q.substr(0, q.length-1); }
-      } else {
-        q = t;
-      }
-      return q;
-    }
-    
-    // See if we have a starting FAQ and show it
-    var h = document.location.hash;
-    if (h && h.length > 0) {
-      var fn = $(h);
-      if (fn && fn.is('.simpleFAQList>*')) {
-        fn.find('.'+qc).trigger('click.simpleFAQ');
-      }
-    }
-    
-    // Return original chain of nodes to continue jQuery chain
+
+    o.node = $(o.node);
+    o.node.each(function() {
+      var sf = new $.jk.SimpleFAQ(o);
+    });
+
     return n;
   };
-  
-  // Defined outside simpleFAQ to allow for usage during construction
-  var audit = function(o) {
-    var d = o.data;
-    if (!d || !d.length || typeof d.splice != 'function') {
-      o.data = $.fn.simpleFAQ.defaults.data;
+
+
+  // CONSTRUCTOR
+  if (!$.jk) { $.jk = {}; }
+  $.jk.SimpleFAQ = function(o) {
+    var t = this, n;
+
+    o = (o)?o:{};
+
+    // Audit options and merge with object
+    $.extend(t, ((o)?o:{}));
+
+    t.node = $( ((o.node)?o.node:null) );
+    if (t.node && t.node.length === 1) {
+      n = t.node;
+    } else {
+      t.node = null;
+      // if we don't have a single node, nothing more we can do...
+      return t;
     }
-    if (typeof o.nodeType != 'string') { o.nodeType = $.fn.simpleFAQ.defaults.nodeType; }
-    if (typeof o.questionClass != 'string') { o.questionClass = $.fn.simpleFAQ.defaults.questionClass; }
-    if (typeof o.answerClass != 'string') { o.answerClass = $.fn.simpleFAQ.defaults.answerClass; }
-    if (typeof o.tagClass != 'string') { o.tagClass = $.fn.simpleFAQ.defaults.tagClass; }
-    
-    if (typeof o.showOnlyOne != 'boolean') { o.showOnlyOne = $.fn.simpleFAQ.defaults.showOnlyOne; }
-    if (typeof o.allowSearch != 'boolean') { o.allowSearch = $.fn.simpleFAQ.defaults.allowSearch; }
-    if (typeof o.minSearchScore != 'number') { o.minSearchScore = $.fn.simpleFAQ.defaults.minSearchScore; }
-    if (typeof o.sortSearch != 'boolean') { o.sortSearch = $.fn.simpleFAQ.defaults.sortSearch; }
-    if (typeof o.caseSensitive != 'boolean') { o.caseSensitive = $.fn.simpleFAQ.defaults.caseSensitive; }
-    if (typeof o.speed != 'number') { o.speed = $.fn.simpleFAQ.defaults.speed; }
-    
-    var ig = o.ignore;
-    if (!ig || !ig.length || typeof ig.splice != 'function') {
-      o.ignore = $.fn.simpleFAQ.defaults.ignore;
+
+    // Are we building the FAQs from data?
+    if ($.isArray(t.data)) {
+      this.buildFaqsFromData();
     }
+
+    // Add some classes and Cache FAQ nodes for use later
+    n.addClass(t.ns+'_list');
+    t.faqNodes = n.children(t.nodeType).addClass(t.ns+'_item');
+
+    t.setupBasicActions();
     
-    return o;
-  }
-  
-  
-  // ----------- Static properties ----------- //
-  
-  $.fn.simpleFAQ.keyTimeout = 400;
-  $.fn.simpleFAQ.tagMatchScore = 0.1;
-  
-  // options for simpleFAQ instances...
-  $.fn.simpleFAQ.defaults = {
+    // Hide all answers by default (not through "hideAll" since we don't want events, sliding, etc)
+    t.faqNodes.find('.'+t.answerClass).hide();
+    // but show any FAQ referenced in URL hash
+    t.showDefaultItem();
+
+    if (t.allowSearch) {
+      t.searchNode = $(t.searchNode);
+      if (t.searchNode.length) { // do we have a search node?
+        if (t.score === null && (typeof $.score == 'function')) {
+          t.score = $.score;
+        }
+        if (typeof t.score == 'function') { // do we have a "score" function?
+          
+          t.addSearchUI();
+          if (!t.showAllOnEmpty) { t.hideSearchResults(t.faqNodes); }
+
+        } else {
+          t.allowSearch = false;
+          t.searchNode = null;
+          t.score = null;
+        }
+      } else {
+        t.allowSearch = false;
+        t.searchNode = null;
+      }
+    }
+
+    // set the class as node data and fire init event
+    n.data(t.ns, t)
+     .trigger('init.'+t.ns, [t]);
+  };
+
+
+  // PUBLIC PROPERTIES (Default options)
+  // Assign default options to the class prototype
+  $.extend($.jk.SimpleFAQ.prototype, {
     data: null,                // Array If provided, this data is used as the FAQ data with each array entry being an object with 'question', 'answer', and 'tags' properties, this will be used to build the list
     nodeType: 'li',            // String The type of node to look for (and use) for FAQs
     questionClass: 'question', // String The class that all questions will have (either you have to give them this class, or use the plugin to build the list)
     answerClass: 'answer',     // String The class that all answers will have (either you have to give them this class, or use the plugin to build the list)
     tagClass: 'tags',          // String The class for a node in the answer that contains tags specific to each answer. If this exists, it boosts the score for search terms that are in the tags
     showOnlyOne: false,        // Boolean If true, only one answer will be visible at a time
+    changeHash: true,          // Boolean If true, the URL hash will be changed on each FAQ toggle, thus allowing for linking directly to a specific FAQ
+    slideSpeed: 500,           // Number or String The speed to open and close FAQ answers. String values must be one of the three predefined speeds: "slow", "normal", or "fast"; numeric values are the number of milliseconds to run the animation (e.g. 1000).
+    
     allowSearch: false,        // Boolean If true, adds a search box (must provide searchNode)
-    searchNode: null,          // jQ Node  Only required if allowSearch is true; it is the container for the search box (should be a node, the jQuery object, or a selector)
-    minSearchScore: 0,         // Number The minimum score a FAQ must have in order to appear in search results. Should be a number between 0 and 1 (Quicksilver score)
+    score: null,               // Function If null, we'll look for the Quicksilver "score" function, if it doesn't exist, search will be disabled
+    searchNode: null,          // String | Element Only required if allowSearch is true; it is the element used for search input. NOTE: we use the "keyup" event, so this should be something that will emit that event correctly! (can be a node, jQuery object, or selector)
+    minSearchScore: 0.5,       // Number The minimum score a FAQ must have in order to appear in search results. Should be a number between 0 and 1 (Quicksilver score)
     sortSearch: false,         // Boolean Whether or not to sort search results
+    showAllOnEmpty: true,      // Boolean Should the plugin show all FAQs when there is no search input?
     caseSensitive: false,      // boolean Whether or not the search is case sensitive
-    speed: 500,                // Number or String The speed to open and close FAQ answers. String values must be one of the three predefined speeds: "slow", "normal", or "fast"; numeric values are the number of milliseconds to run the animation (e.g. 1000).
-    ignore: ['the', 'a', 'an', 'i', 'we', 'you', 'it', 'that', 'those', 'these', 'them', 'to', 'and', 'or', 'as', 'at', 'by', 'for', 'of', 'so']
-                                // Array A list of words to ignore when searching
-  };
+    keyTimeout: 400,           // Number Wait time before searching occurs
+    partialTagScore: 0.1,      // Number What to increase the match score by when partial tags are matched (such as "sim" -> "simple")
+    exactTagScore: 0.2,        // Number What to increase the match score by when an exact tag is matched (such as "simple" -> "simple")
+
+    node: null,                // Node | String The node (or selector) to use for the FAQ UI. If not set, the current node selected by $(...).simpleFAQ(); will be used
+    ns: 'simpleFAQ'            // String Used before all assigned classes and as an event namespace
+  });
+
+
+  // PUBLIC METHODS
+  $.extend($.jk.SimpleFAQ.prototype, {
+    
+    setupBasicActions: function() {
+      var t = this;
+      t.node
+        .on('mouseover', '.'+t.questionClass, function() {
+          $(this).addClass(t.ns+'Hover');
+        })
+        .on('mouseout', '.'+t.questionClass, function() {
+          $(this).removeClass(t.ns+'Hover');
+        })
+        .on('click.'+t.ns, '.'+t.questionClass, function(e) {
+          var faq = $(this).parents('.'+t.ns+'_item');
+          if (t.showOnlyOne) {
+            // Hide all others
+            t.hideAll(faq);
+          }
+          t.toggleFaq(faq);
+        });
+    },
+
+    buildFaqsFromData: function() {
+      var  t = this,
+          fc = "";
+      for (var i=0, l=t.data.length; i<l; ++i) {
+        fc += "<"+t.nodeType+">"+
+                "<p class='"+t.questionClass+"'>"+t.data[i].question+"</p>"+
+                "<div class='"+t.answerClass+"'>"+
+                  t.data[i].answer+
+                "</div>"+
+                "<p class='"+t.tagClass+"'>"+(t.data[i].tags || "")+"</p>"+
+              "</"+t.nodeType+">";
+      }
+      t.node.append(fc);
+    },
+
+    toggleFaq: function(faq, cb) {
+      var t = this;
+      faq = (faq || $(t.faqNodes.get(0)));
+      var ans = faq.find('.'+t.answerClass);
+      cb = (cb || function() {});
+
+      ans
+        .slideToggle(t.slideSpeed, function() {
+          if (ans.is(':visible')) {
+            faq.addClass(t.ns+'Showing');
+            t.node.trigger('show.'+t.ns, [faq[0]]);
+
+            if (t.changeHash) {
+              var h = faq.attr('id');
+              if (h && h.length > 0) {
+                document.location.hash = escape(h);
+              }
+            }
+
+          } else {
+            faq.removeClass(t.ns+'Showing');
+            t.node.trigger('hide.'+t.ns, [faq[0]]);
+          }
+          cb();
+        });
+    },
+
+    hideAll: function(except, cb) {
+      var   t = this,
+          cnt = 0,
+          vis = null;
+      except = (except || null);
+      cb = (cb || function() {});
+
+      vis = t.faqNodes.find('.'+t.answerClass+':visible');
+      if (except) {
+        vis = vis.not(except.find('.'+t.answerClass));
+      }
+
+      if (vis.length) {
+        vis
+          .slideUp(t.slideSpeed, function() {
+            var p = $(this).parents('.'+t.ns+'_item').removeClass(t.ns+'Showing');
+            t.node.trigger('hide.'+t.ns, [p[0]]);
+            
+            // only do callback once, when all answers are hidden
+            cnt++;
+            if (cnt >= vis.length) { cb(); }
+          });
+      } else {
+        cb();
+      }
+    },
+
+    showDefaultItem: function() {
+      var  t = this,
+          ch = document.location.hash,
+          fn = null;
+      if (ch && ch.length > 0) {
+        fn = $(ch);
+        if (fn.length && fn.is('.'+t.ns+'_item')) {
+          t.toggleFaq(fn);
+        }
+      }
+    },
+
+    hideSearchResults: function(nodes) {
+      var t = this;
+      nodes
+        .hide()
+        .removeClass(t.ns+'Result '+t.ns+'Showing')
+        .find('.'+t.answerClass)
+          .hide();
+    },
+
+    addSearchUI: function() {
+      var  t = this;
+      if (!t.searchNode || !t.searchNode.length) { return; }
+      
+      t.__sto = null;
+      t.searchNode
+        .addClass(t.ns+'Search')
+        .keyup(function(e) {
+          clearTimeout(t.__sto);
+          t.__sto = null;
+          
+          // add a slight delay to wait for more input
+          t.__sto = setTimeout(function() {
+            t.handleSearchKey(t.searchNode.val());
+          }, t.keyTimeout);
+        });
+    },
+
+    handleSearchKey: function(v) {
+      var      t = this,
+          scores = [];
+
+      t.node.trigger('searchStart.'+t.ns);
+
+      if (v.length < 1) {
+        // remove classes, etc
+        t.hideSearchResults(t.faqNodes);
+        // show all (unopened) if desired
+        if (t.showAllOnEmpty) { t.faqNodes.show(); }
+        t.node.trigger('searchEnd.'+t.ns, [scores]);
+
+        return scores;
+      }
+
+      // Score the input
+      scores = t.doScoring(v);
+      
+      if (t.sortSearch) {
+        scores.sort(function(a, b){ return b[0] - a[0]; });
+        t.node.trigger('sort.'+t.ns, [scores]);
+      }
+      
+      // Show the relevant questions by search score
+      var resFaqs = [];
+      for (var i=0, l=scores.length; i<l; ++i) {
+        scores[i][1].show().addClass(t.ns+'Result');
+        resFaqs.push(scores[i][1][0]);
+        // if they want things sorted, then we append the FAQ to the parent node
+        if (t.sortSearch) { t.node.append(scores[i][1]); }
+      }
+
+      // hide FAQs not in search results
+      t.hideSearchResults(t.faqNodes.not(resFaqs));
+
+      t.node.trigger('searchEnd.'+t.ns, [scores]);
+
+      return scores;
+    },
+
+    doScoring: function(v) {
+      var   t = this,
+          res = [],
+            w = [];
+      
+      if (!v || !v.length) { return res; }
+      v = ""+((t.caseSensitive)?v:v.toLowerCase());
+      w = (""+v).split(' ');
+
+      t.faqNodes.each(function() {
+        var     faq = $(this),
+            faqText = "",
+                  s = 0;
+
+        faqText  = faq.find('.'+t.questionClass).text();
+        // add a space between question and answer (all text is searched)
+        faqText += " "+faq.find('.'+t.answerClass).text();
+        faqText  = (t.caseSensitive)?faqText:faqText.toLowerCase();
+        
+        for (var i=0, l=w.length; i<l; ++i) {
+          if (!w[i].length) { continue; } // ignore empty entries
+          s +=  t.score(faqText, w[i]);
+        }
+
+        s += t.scoreTags(faq.find('.'+t.tagClass).text(), w);
+        
+        if (s > t.minSearchScore) {
+          res.push([s, faq]);
+        }
+      });
+
+      return res;
+    },
+
+    scoreTags: function(tags, w) {
+      var   t = this,
+            s = 0,
+          tag = "",
+            m = null;
+
+      if (!tags.length) { return s; }
+      if (!w || !w.splice || !w.length) { return s; }
+
+      // handle case sensitivity and replace some punctuation with spaces for better matching
+      tags = ((t.caseSensitive)?tags:tags.toLowerCase()).replace(/\s?(,|;)\s?/g, ' ');
+
+      for (var i=0, l=w.length; i<l; ++i) {
+        if (!w[i].length) { continue; } // ignore empty entries
+        
+        m = tags.match(new RegExp("[^\\s]*("+w[i]+")[^\\s]*"));
+
+        if (m) {
+          // we have a match, see if it's exact or partial
+          if (m[0].length == m[1].length) {
+            s += t.exactTagScore;
+          } else {
+            s += t.partialTagScore;
+          }
+        }
+      }
+      return s;
+    }
+
+  });
 
 })(jQuery);

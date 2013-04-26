@@ -1,16 +1,17 @@
 /* -------- simpleFAQ styles --------- */
-#faqList li { list-style: none; }
-#faqList .question {
+.simpleFAQ_list li { list-style: none; }
+.simpleFAQ_list .question {
   padding-left: 18px;
-  background: transparent url('faq/plus.png') left center no-repeat; 
+  background: transparent url('faq/plus.png') left center no-repeat;
+  cursor: pointer;
 }
-#faqList li.simpleFAQShowing .question {
+.simpleFAQShowing .question {
   background: transparent url('faq/minus.png') left center no-repeat;
 }
-#faqList .simpleFAQHover { color: #060; }
-#faqList .answer {
+.simpleFAQ_list .simpleFAQHover { color: #060; }
+.simpleFAQ_item .answer {
   margin-left: 1em;
   border: 1px solid #66c;
   padding: 0.4em;
 }
-.tags { font-size: 0.7em; color: #999; }
+.simpleFAQ_item .tags { font-size: 0.7em; color: #999; }
