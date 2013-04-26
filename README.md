@@ -55,6 +55,8 @@ $('#faqs').simpleFAQ({
 });
 ```
 
+See more examples at: http://jordankasper.com/jquery/faq/examples.php
+
 Events
 ------
 
@@ -92,6 +94,7 @@ Options
 * _slideSpeed_: `number | string` The speed to open and close FAQ answers. String values must be one of the three predefined speeds: "slow", "normal", or "fast"; numeric values are the number of milliseconds to run the animation (e.g. 1000). _(default: `500`)_
 
 _Search Options_
+
 * _allowSearch_: `boolean` If true, adds searching ability (must provide searchNode) _(default: `false`)_
 * _searchNode_: `selector | HTMLElement | jQuery object` Only required if `allowSearch` is `true`; it is the element used for search input. NOTE: we use the `keyup` event, so this should be something that will emit that event correctly and can have a `value`! (Can be a node, jQuery object, or selector.) _(default: `null`)_
 * _minSearchScore_: `number` The minimum score a FAQ must have in order to appear in search results. Depends on what search function youa re using, but quicksilver returns scores between 0 and 1 (although the final score can be more than 1 based on tag scoring). _(default: `0.5`)_
