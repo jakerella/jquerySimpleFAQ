@@ -14,4 +14,4 @@
   border: 1px solid #66c;
   padding: 0.4em;
 }
-.simpleFAQ_item .tags { font-size: 0.7em; color: #999; }
+.simpleFAQ_item .tags { display: none; }
