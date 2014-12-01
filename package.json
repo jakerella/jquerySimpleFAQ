@@ -1,6 +1,30 @@
 {
   "name": "simpleFAQ",
   "version": "1.0.0",
+  "description": "jQuery plugin to create an easy-to-use FAQ user interface",
+  "main": "src/jquery.simpleFAQ.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "grunt qunit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jakerella/jquerySimpleFAQ.git"
+  },
+  "keywords": [
+    "jquery-plugin",
+    "FAQ",
+    "questions",
+    "accordion"
+  ],
+  "author": "Jordan Kasper",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jakerella/jquerySimpleFAQ/issues"
+  },
+  "homepage": "https://github.com/jakerella/jquerySimpleFAQ",
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-contrib-qunit": ">=0.2.1",

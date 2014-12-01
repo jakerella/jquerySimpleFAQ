@@ -55,7 +55,7 @@ $('#faqs').simpleFAQ({
 });
 ```
 
-See more examples at: http://jordankasper.com/jquery/faq/examples.php
+See more examples at: http://jordankasper.com/jquery/faq/examples
 
 Events
 ------
