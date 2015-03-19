@@ -1,5 +1,5 @@
 {
-  "name": "simpleFAQ",
+  "name": "simple-faq",
   "version": "1.0.0",
   "description": "jQuery plugin to create an easy-to-use FAQ user interface",
   "main": "src/jquery.simpleFAQ.js",
